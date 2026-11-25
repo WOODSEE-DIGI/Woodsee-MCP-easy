@@ -10,6 +10,11 @@ This directory contains only the **four vendored private bridges**:
 They have no public upstream repo, so their scrubbed source ships with this
 kit and is copied into `~/.local/share/woodsee-mcp/servers/` at install time.
 
+**Dependency warning:** `vision-bridge` and `swiftmaestro-mcp` both rely on
+SwiftMaestro being installed and configured. Without it their agent tools load
+but have no data, and `analyze_image` only returns image data for a
+vision-capable calling agent to process. See the main README for details.
+
 The other **seven servers are not stored here** — `manifest.json` defines them
 and the installer fetches them when you run it:
 

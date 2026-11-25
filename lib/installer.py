@@ -219,6 +219,8 @@ def main():
             dest = fetch_server(name, server, install_dir, home, args.yes)
             setup_server(name, server, dest, install_dir, home)
             ensure_backend(name, server, install_dir, home, args.yes)
+            for note in server.get('notes', []):
+                print(f'[{name}] NOTE: {note}')
             installed[name] = server
         except Exception as e:
             print(f'[{name}] FAILED: {e}', file=sys.stderr)

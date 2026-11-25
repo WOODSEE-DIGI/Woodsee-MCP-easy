@@ -3,6 +3,7 @@
   "name": "Woodsee MCP Easy",
   "description": "Machine-agnostic installer for the Woodsee MCP server stack. Profiles select which servers are installed; clients select which agent configs are updated.",
   "defaults": {
+    "primary_client": "opencode",
     "profile": "full",
     "clients": ["opencode", "warp", "lmstudio", "claude", "qwen", "swiftmaestro"],
     "install_dir": "~/.local/share/woodsee-mcp"
@@ -35,6 +36,9 @@
     },
     "swiftmaestro-mcp": {
       "label": "SwiftMaestro Agent Bridge - inspect and message SwiftMaestro agents",
+      "notes": [
+        "Requires SwiftMaestro to be installed and configured: reads agents.json/configs.json from ~/Library/Application Support/SwiftMaestro and API keys from the macOS Keychain. Without it, agent lists are empty and send_to_agent fails."
+      ],
       "profiles": ["private", "full"],
       "kind": "vendored",
       "path": "servers/swiftmaestro-mcp",
@@ -45,6 +49,10 @@
     },
     "vision-bridge": {
       "label": "Vision Bridge - image analysis plus agent bridge",
+      "notes": [
+        "REQUIRES SwiftMaestro for the agent-bridge tools: list_agents, get_agent_history, send_to_agent, list_configs, get_agent_workspace and update_agent_workspace read ~/Library/Application Support/SwiftMaestro/agents.json and configs.json, plus Keychain service com.woodseedigi.SwiftMaestro.",
+        "analyze_image can run without the app but only hands image data to the calling model - real understanding needs a vision-capable calling agent or SwiftMaestro configs marking the main model as vision-capable."
+      ],
       "profiles": ["private", "full"],
       "kind": "vendored",
       "path": "servers/vision-bridge",
