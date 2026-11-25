@@ -117,10 +117,8 @@ installed unless you explicitly ask for less.**
 | `public` | Open-source servers only: XcodeBuildMCP, Playwright, read-website-fast, local-only Firecrawl MCP, browse CLI, webclaw, whatsapp-mcp |
 | `private` | The four custom Woodsee bridges only: ai-context-bridge, swift-terminals, swiftmaestro-mcp, vision-bridge |
 
-**Sharing note:** the `private` bridges are included in this repository. Before
-pushing to a public remote, run your own PII/secret scrub — the installer
-already refuses to copy vendored source that still contains home-directory
-paths, machine names, key-shaped strings or private IPs.
+Publisher notes (PII scrub, push checks, licence) are in `MAINTAINING.md`.
+Installers do not need to read it.
 
 ## Other clients (optional)
 
@@ -172,49 +170,37 @@ Selecting `firecrawl-mcp` automatically:
 The compose file is vendored, scrubbed and used as-is. `whatsapp-mcp` needs
 its Go bridge started separately; the installer prints the command.
 
-## How it protects you
+## How it protects you (the person installing)
 
-The kit treats the machine it runs on as untrusted territory. Every protective
-default used while building it is encoded in `policy.json` and enforced by
-code, so it survives being copied to a new machine or handed to a friend — it
-does not depend on an agent remembering to be careful.
+The installer assumes the code it downloads is untrusted and the machine it
+runs on is yours. These checks happen automatically — you do not have to turn
+them on or understand them to install safely.
 
 | Protection | What it does for you |
 |---|---|
-| **Two-stage download scan** | `lib/scanner.py` runs a suspicious-pattern/symlink quick scan, then a deep scan with binary signature checks, optional SHA-256 verification and a real **ClamAV** antivirus scan when `clamscan` is installed (`--clamav` makes it mandatory), **before** any downloaded source is built or executed. If any stage fails, the install stops. |
-| **Check on the four bundled bridges** | The four private bridges have no public repo, so their source is stored inside this kit. Before copying them onto a new machine, the installer scans that copy for your home path, machine names, API keys, private network addresses and emails. If it finds any, it refuses the copy — so nothing identifying you ends up in a file you share. It checks the copy; it never changes files on your original machine. |
-| **Scrub tool with actual redaction** | `lib/safety.py scrub` reports PII/secret hits; `scrub --fix` **rewrites** them to safe placeholders (`~`, `<email>`, `<REDACTED>`, …) after making a verified backup of each file. It is a working tool, not just advice. |
-| **Verified backups before writes** | Every config file is copied to `<name>.bak-<timestamp>` and the copy is verified before modification. You can always roll back. |
-| **Merge, never clobber** | Managed entries are merged into existing configs. Servers you added yourself are preserved — the installer never replaces a whole config file. |
-| **Command guard** | Every shell command the installer runs is classified against a deny-list (`rm -rf /`, `mkfs`, `dd`, `kill -9`, `killall`, `shutdown`, …) and a confirm-list (`rm`, `mv`, `kill`, `rmdir`, …). Dangerous commands cannot run silently. |
-| **Commit gate** | A `pre-commit` hook scans staged files for API keys, tokens, passwords, personal paths, machine names, private IPs and emails. The name `woodsee` is allowed; `${VAR:-default}` env defaults are correctly ignored. |
-| **Push gate** | A `pre-push` hook runs the full check: secret/PII scan, licence check, both scan stages on every vendored server, and hook status. A bad push is blocked before it leaves the machine. |
-| **Portable agent rules** | `rules/AGENTS-safety.md` carries the same behaviour to any AI agent working in a repo on a new machine: scan downloads, back up before destructive work, never inline secrets, never launch the app being developed, commit only when asked. |
-| **Secrets stay out of band** | Nothing in the repo contains keys or tokens. Servers read credentials from Keychain or environment variables; Firecrawl needs no API key or subscription. |
-| **Local-first by default** | Prefer offline/local tools and local models. No telemetry, analytics or data collection. |
+| **Scans code before running it** | Every downloaded server gets a quick pattern/symlink scan and a deep scan with binary signature checks, optional SHA-256 verification and a real **ClamAV** antivirus scan. If anything fails, that server is not built or run. |
+| **Backs up your config first** | Before touching `opencode.jsonc` or any other agent config, it writes a timestamped `.bak` file and verifies it. If you don't like the result, you can roll back. |
+| **Merges instead of overwriting** | Your existing MCP servers and settings are left alone. The installer only adds its own entries. |
+| **Won't run destructive commands** | Dangerous commands (`rm -rf /`, `mkfs`, `dd`, `kill -9`, `shutdown`, …) are blocked; risky ones require confirmation. Nothing can quietly wipe your machine during an install. |
+| **Doesn't ask for your secrets** | No API key or subscription is needed for the local-only Firecrawl setup, and nothing in the repo contains keys. Credentials stay in your Keychain or environment variables. |
+| **Skips what your machine can't support** | Missing prerequisites (Swift toolchain, Chrome extension, Rust, Go bridge) cause that server to be skipped with an explanation — not a broken half-install. |
+| **No telemetry** | Local-first tools and models. No analytics, tracking or data collection. |
+| **Tools for your own files** | The same safety tools are available for anything *you* download or edit — see the commands below. |
 
-Enable the hooks once per clone, then run the full gate whenever you like:
+You can use them yourself at any time:
 
 ```bash
-python3 lib/safety.py install-hooks        # enable commit/push gates once per clone
-python3 lib/safety.py check                # full gate, any time
-python3 lib/safety.py scrub                # report PII/secrets in working tree
-python3 lib/safety.py scrub --fix          # actually redact them (backs up first)
-python3 lib/scanner.py deep . --clamav     # deep scan with mandatory AV
-scripts/final-scrub.sh                     # all three in one command, before a push
-./install.sh --policy-check                # same gate through the installer
-python3 lib/safety.py guard "rm -rf /"     # see the policy classify a command
-python3 lib/safety.py backup <file>        # verified timestamped backup
+python3 lib/safety.py scrub --fix <path>       # remove secrets/PII from your own files, with backup
+python3 lib/safety.py backup <file>            # timestamped, verified backup
+python3 lib/scanner.py deep <path> --clamav    # deep scan + antivirus on any folder
+python3 lib/safety.py guard "<command>"        # check whether a command is destructive
 ```
 
-Policy rules are declarative: edit `policy.json` to add a pattern, an exempt
-path, or a new rule. The installer, hooks and `lib/safety.py` all read that same
-file, so one edit updates every gate.
+No hooks need enabling to install. Commit/push hooks and publishing checks are
+for people *developing* this repo — see `MAINTAINING.md`.
 
-These tools do the work — scan, detect, redact, back up and block — rather than
-just telling you to be careful. They are still best-effort local checks: a
-human should review code before executing it and eyeball the final diff before
-a public push.
+These are best-effort local checks, not a guarantee. A human should still
+review code before executing it.
 
 ## Customising
 
