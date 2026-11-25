@@ -20,6 +20,15 @@ command, works on a fresh Mac, and is safe to hand to a friend.
 By default it installs **everything**. Optional profiles let you narrow that
 to public servers (for friends) or the four custom bridges — see below.
 
+## Verified on a fresh Mac
+
+![OpenCode and XcodeBuildMCP building and launching a hello-world iOS app in Simulator on a clean macOS install](Screenshots/FreshMacOS-to-xcodebuild.png)
+
+This was done on a completely fresh macOS virtual machine: install OpenCode and
+Xcode, clone this kit, run the installer, then ask an agent to build a small iOS
+app. XcodeBuildMCP built it and launched it in the Simulator — the whole chain
+from a clean machine to a running app.
+
 ## Quick start
 
 ```bash
