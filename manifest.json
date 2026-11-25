@@ -1,0 +1,145 @@
+{
+  "version": "1.0.0",
+  "name": "Woodsee MCP Easy",
+  "description": "Machine-agnostic installer for the Woodsee MCP server stack. Profiles select which servers are installed; clients select which agent configs are updated.",
+  "defaults": {
+    "profile": "full",
+    "clients": ["opencode", "warp", "lmstudio", "claude", "qwen", "swiftmaestro"],
+    "install_dir": "~/.local/share/woodsee-mcp"
+  },
+  "profiles": {
+    "public": "Public/open-source servers only - safe to share with friends.",
+    "private": "The four custom Woodsee bridges only - for your own machines.",
+    "full": "Everything - public servers plus the private bridges."
+  },
+  "servers": {
+    "ai-context-bridge": {
+      "label": "AI Context Bridge - shared memory, context, files and indexing",
+      "profiles": ["private", "full"],
+      "kind": "vendored",
+      "path": "servers/ai-context-bridge",
+      "command": ["node", "{{INSTALL_DIR}}/servers/ai-context-bridge/server.js"],
+      "setup": ["npm install --omit=dev"],
+      "env": {},
+      "requires": ["node", "npm"]
+    },
+    "swift-terminals": {
+      "label": "Swift Terminals - persistent named shell sessions",
+      "profiles": ["private", "full"],
+      "kind": "vendored",
+      "path": "servers/swift-terminals",
+      "command": ["node", "{{INSTALL_DIR}}/servers/swift-terminals/index.js"],
+      "setup": ["npm install --omit=dev"],
+      "env": {},
+      "requires": ["node", "npm"]
+    },
+    "swiftmaestro-mcp": {
+      "label": "SwiftMaestro Agent Bridge - inspect and message SwiftMaestro agents",
+      "profiles": ["private", "full"],
+      "kind": "vendored",
+      "path": "servers/swiftmaestro-mcp",
+      "command": ["{{INSTALL_DIR}}/servers/swiftmaestro-mcp/.build/release/swiftmaestro-mcp-server"],
+      "setup": ["swift build -c release"],
+      "env": {},
+      "requires": ["swift"]
+    },
+    "vision-bridge": {
+      "label": "Vision Bridge - image analysis plus agent bridge",
+      "profiles": ["private", "full"],
+      "kind": "vendored",
+      "path": "servers/vision-bridge",
+      "command": ["node", "{{INSTALL_DIR}}/servers/vision-bridge/server.js"],
+      "setup": ["npm install --omit=dev"],
+      "env": {},
+      "requires": ["node", "npm"]
+    },
+    "xcodebuildmcp": {
+      "label": "XcodeBuildMCP - build, run and inspect Apple projects",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/getsentry/XcodeBuildMCP.git",
+      "ref": "v2.6.2",
+      "command": ["node", "{{INSTALL_DIR}}/servers/xcodebuildmcp/build/cli.js", "mcp"],
+      "setup": ["npm install --omit=dev", "npm run build"],
+      "env": {"HOME": "{{HOME}}"},
+      "requires": ["node", "npm", "git"]
+    },
+    "playwright": {
+      "label": "Playwright MCP - browser automation, network, PDF and vision",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/microsoft/playwright-mcp.git",
+      "ref": "main",
+      "command": ["node", "{{INSTALL_DIR}}/servers/playwright/packages/playwright-mcp/cli.js", "--headless", "--caps=network,storage,testing,pdf,vision,devtools"],
+      "setup": ["npm install --omit=dev", "npm run build"],
+      "env": {"HOME": "{{HOME}}"},
+      "requires": ["node", "npm", "git"]
+    },
+    "read-website-fast": {
+      "label": "read-website-fast - token-efficient URL to Markdown",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/just-every/mcp-read-website-fast.git",
+      "ref": "main",
+      "command": ["node", "{{INSTALL_DIR}}/servers/read-website-fast/dist/serve-restart.js"],
+      "setup": ["npm install --omit=dev", "npm run build"],
+      "env": {},
+      "requires": ["node", "npm", "git"]
+    },
+    "firecrawl-mcp": {
+      "label": "Firecrawl MCP - local-only scrape, search and crawl (no API key)",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/WOODSEE-DIGI/firecrawl-mcp-server.git",
+      "ref": "main",
+      "command": ["node", "{{INSTALL_DIR}}/servers/firecrawl-mcp/dist/index.js"],
+      "setup": ["npm install --omit=dev", "npm run build"],
+      "env": {"FIRECRAWL_API_URL": "http://127.0.0.1:3002"},
+      "requires": ["node", "npm", "git"],
+      "backend": {
+        "compose": "assets/firecrawl/docker-compose.yaml",
+        "requires": ["brew", "colima", "docker"],
+        "start": ["colima start", "docker compose -f {{INSTALL_DIR}}/assets/firecrawl/docker-compose.yaml up -d"],
+        "health_url": "http://127.0.0.1:3002",
+        "timeout": 180
+      }
+    },
+    "browse": {
+      "label": "browse - drive your real Chrome-family browser via the extension",
+      "profiles": ["public", "full"],
+      "kind": "cli",
+      "binary": "~/.local/bin/browse",
+      "command": ["{{HOME}}/.local/bin/browse", "mcp"],
+      "setup": [],
+      "env": {"OPENCODE_BROWSER_RUNTIME": "auto-update"},
+      "requires": [],
+      "opencode_path": ["servers", "browse"],
+      "install_hint": "Install browse from https://anoma.ly then run: browse install"
+    },
+    "webclaw": {
+      "label": "webclaw - local-first Rust web scraping",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/0xMassi/webclaw.git",
+      "ref": "main",
+      "command": ["{{INSTALL_DIR}}/servers/webclaw/target/release/webclaw-mcp"],
+      "setup": ["cargo build -p webclaw-mcp --release"],
+      "env": {},
+      "requires": ["cargo", "git"]
+    },
+    "whatsapp-mcp": {
+      "label": "whatsapp-mcp - messaging via the WhatsApp bridge",
+      "profiles": ["public", "full"],
+      "kind": "git",
+      "repo": "https://github.com/lharries/whatsapp-mcp.git",
+      "ref": "main",
+      "command": ["uv", "--directory", "{{INSTALL_DIR}}/servers/whatsapp-mcp/whatsapp-mcp-server", "run", "main.py"],
+      "setup": [],
+      "env": {},
+      "requires": ["uv", "git"],
+      "backend": {
+        "note": "Start the Go bridge separately: cd {{INSTALL_DIR}}/servers/whatsapp-mcp/whatsapp-bridge && go run main.go"
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Full safety gate before any push: secrets, PII, licence, scanner, hooks.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+echo "Woodsee safety gate: running full check..."
+exec python3 "$ROOT/lib/safety.py" check

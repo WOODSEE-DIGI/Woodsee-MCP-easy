@@ -1,0 +1,5 @@
+#!/bin/bash
+# Block commits that contain secrets or personal identifiers.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+exec python3 "$ROOT/lib/safety.py" secrets

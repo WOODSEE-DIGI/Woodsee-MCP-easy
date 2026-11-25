@@ -1,0 +1,17 @@
+{
+  "name": "swiftmaestro-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server bridging Amy (Oz/Warp) to SwiftMaestro agents, histories, and LLM endpoints.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "generate-prompt": "node generate-agent-prompt.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

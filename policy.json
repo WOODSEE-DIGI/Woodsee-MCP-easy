@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "name": "Woodsee safety policy",
+  "description": "Machine-enforced protective defaults. Applied by the installer, git hooks and the safety CLI.",
+  "exempt_paths": [
+    "lib/safety.py",
+    "lib/installer.py",
+    "lib/scanner.py",
+    "policy.json",
+    "rules/AGENTS-safety.md"
+  ],
+  "rules": [
+    {
+      "id": "two-stage-scan",
+      "severity": "high",
+      "when": ["fetch-git", "before-build"],
+      "action": "Run lib/scanner.py quick then deep on all downloaded source before any setup/build command. The deep stage runs ClamAV automatically when clamscan is installed, and --clamav makes it mandatory."
+    },
+    {
+      "id": "scrub-vendored",
+      "severity": "high",
+      "when": ["copy-vendored"],
+      "action": "Refuse to copy vendored source containing home paths, machine names, key-shaped strings, private IPs or emails."
+    },
+    {
+      "id": "backup-before-write",
+      "severity": "high",
+      "when": ["write-config", "modify-user-file"],
+      "action": "Create a timestamped .bak copy before modifying any user config or preference file."
+    },
+    {
+      "id": "merge-not-overwrite",
+      "severity": "high",
+      "when": ["write-config"],
+      "action": "Merge managed entries into existing configs; never replace the whole file or drop entries you did not add."
+    },
+    {
+      "id": "secrets-never-inline",
+      "severity": "critical",
+      "when": ["commit", "push", "share"],
+      "action": "No API keys, tokens, passwords or private IPs in source, configs, logs or memory. Use Keychain or environment variables."
+    },
+    {
+      "id": "deep-scrub-before-public",
+      "severity": "critical",
+      "when": ["push", "publish"],
+      "action": "Full secret + PII scan of all staged files before any public push. The name 'woodsee' is explicitly allowed."
+    },
+    {
+      "id": "redact-not-just-report",
+      "severity": "high",
+      "when": ["scrub", "publish"],
+      "action": "Scrubbing must provide a real redaction mode (safety.py scrub --fix) with a verified backup per file, not only a report telling the user to fix it manually."
+    },
+    {
+      "id": "block-destructive-commands",
+      "severity": "critical",
+      "when": ["any-command"],
+      "action": "Deny rm -rf /, mkfs, newfs, dd, shred, srm, diskutil erase/partition, chmod -R 000, chown -R, kill -9, killall, pkill -9, shutdown, reboot, halt. Require explicit confirmation for other rm/mv/kill/rmdir operations."
+    },
+    {
+      "id": "never-launch-apps",
+      "severity": "medium",
+      "when": ["verify"],
+      "action": "Verification stops at build success. Do not open, launch, kill or UI-drive the app - the user tests it themselves."
+    },
+    {
+      "id": "backup-before-reset",
+      "severity": "high",
+      "when": ["delete", "reset", "overwrite-user-data"],
+      "action": "Make a recoverable backup and confirm it succeeded before touching preferences, keychain items, model files or project config."
+    },
+    {
+      "id": "license-noncommercial",
+      "severity": "medium",
+      "when": ["commit", "push"],
+      "action": "New original repos use PolyForm Noncommercial 1.0.0; forks keep their upstream licence."
+    },
+    {
+      "id": "local-first",
+      "severity": "low",
+      "when": ["configure"],
+      "action": "Prefer local/offline tools and local models. Avoid telemetry, analytics and unnecessary cloud calls."
+    },
+    {
+      "id": "no-git-in-icloud",
+      "severity": "medium",
+      "when": ["init-repo"],
+      "action": "Do not initialise git inside iCloud-synced folders. Prefer offline local repos with no remote until explicitly requested."
+    }
+  ],
+  "command_policy": {
+    "deny": [
+      "rm -rf /", "rm -fr /", "mkfs", "newfs", "dd if=", "shred", "srm",
+      "diskutil erase", "diskutil partitionDisk", "chmod -R 000", "chown -R",
+      "kill -9", "killall", "pkill -9", "shutdown", "reboot", "halt"
+    ],
+    "confirm": ["rm ", "mv ", "kill ", "pkill ", "rmdir ", "unlink ", "trash ", "del "]
+  },
+  "allowed_identifiers": ["woodsee"]
+}
